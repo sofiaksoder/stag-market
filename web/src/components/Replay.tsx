@@ -5,7 +5,7 @@ import { Ladder } from './Ladder'
 import { Panel } from './Panel'
 import { Tape } from './Tape'
 
-const REPLAY_URL = import.meta.env.VITE_REPLAY_URL ?? '/replay.json'
+const REPLAY_URL = import.meta.env.VITE_REPLAY_URL ?? `${import.meta.env.BASE_URL}replay.json`
 const BOOK_LEVELS = 8
 const SPEEDS = [1, 4, 16]
 const BARS = 160

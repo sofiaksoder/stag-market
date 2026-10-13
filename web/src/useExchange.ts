@@ -3,8 +3,12 @@ import { Account, type FillRecord, type LogEntry, type OpenOrder } from './accou
 import { MarketState, SNAPSHOT_REQ, chipState, type Candle, type Side, type Trade } from './feed'
 import { unrealized, type Position } from './pnl'
 import { encodeCancel, encodeNewOrder, type OrderRequest } from './protocol'
+import { connectWasm, connectWebSocket, type Transport } from './transport'
 
 const URL = import.meta.env.VITE_WS_URL ?? 'ws://127.0.0.1:9002'
+
+// A demo build runs the engine in the page instead of talking to a server.
+export const DEMO = import.meta.env.VITE_DEMO === 'wasm'
 const TICK_MS = 100 // the UI redraws at 10 Hz, not once per message
 const RETRY_MS = 1000
 const TOAST_MS = 2400
@@ -41,7 +45,7 @@ export interface Exchange {
 
 export function useExchange(depth: number): Exchange {
   const [view, setView] = useState<View | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
+  const transportRef = useRef<Transport | null>(null)
   const accountRef = useRef<Account>(new Account())
 
   useEffect(() => {
@@ -49,20 +53,20 @@ export function useExchange(depth: number): Exchange {
     let closed = false
     const account = accountRef.current
 
-    const state = new MarketState(() => wsRef.current?.send(new Uint8Array([SNAPSHOT_REQ])))
+    const state = new MarketState(() => transportRef.current?.send(new Uint8Array([SNAPSHOT_REQ])))
     state.onEvent = (kind, text) => account.addLog(kind, text)
     state.onReply = (m) => (m.kind === 'ack' ? account.onAck(m.ack) : account.onFill(m.fill))
 
     const connect = () => {
-      const ws = new WebSocket(URL)
-      wsRef.current = ws
-      ws.binaryType = 'arraybuffer'
-      ws.onopen = () => state.onOpen()
-      ws.onmessage = (e) => state.onMessage(e.data as ArrayBuffer)
-      ws.onclose = () => {
-        state.onClose()
-        if (!closed) retry = window.setTimeout(connect, RETRY_MS)
+      const handlers = {
+        onOpen: () => state.onOpen(),
+        onMessage: (buf: ArrayBuffer) => state.onMessage(buf),
+        onClose: () => {
+          state.onClose()
+          if (!closed && !DEMO) retry = window.setTimeout(connect, RETRY_MS)
+        },
       }
+      transportRef.current = DEMO ? connectWasm(handlers) : connectWebSocket(URL, handlers)
     }
     connect()
 
@@ -115,23 +119,15 @@ export function useExchange(depth: number): Exchange {
       closed = true
       window.clearTimeout(retry)
       window.clearInterval(timer)
-      wsRef.current?.close()
+      transportRef.current?.close()
     }
   }, [depth])
 
-  const send = (bytes: Uint8Array<ArrayBuffer>) => {
-    const ws = wsRef.current
-    if (!ws || ws.readyState !== WebSocket.OPEN) return false
-    ws.send(bytes)
-    return true
-  }
+  const send = (bytes: Uint8Array<ArrayBuffer>) => transportRef.current?.send(bytes) ?? false
 
   const place = useCallback((o: Omit<OrderRequest, 'clOrdId'>) => {
-    const ws = wsRef.current
-    if (!ws || ws.readyState !== WebSocket.OPEN) return false
     const req = accountRef.current.stage(o)
-    ws.send(encodeNewOrder(req))
-    return true
+    return send(encodeNewOrder(req))
   }, [])
 
   const cancel = useCallback((id: number) => send(encodeCancel(id)), [])

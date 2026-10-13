@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { binTone, engineShare, fmtNs, fmtOps, loadPerf, wireSegments, type PerfData } from '../perf'
 import { Panel } from './Panel'
 
-const PERF_URL = import.meta.env.VITE_PERF_URL ?? '/perf.json'
+const PERF_URL = import.meta.env.VITE_PERF_URL ?? `${import.meta.env.BASE_URL}perf.json`
 const SEGMENT_COLORS = ['#55554e', '#1c1d1a', '#8d897e', '#dcd8ce']
 
 export function Performance() {

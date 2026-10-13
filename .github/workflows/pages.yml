@@ -1,0 +1,48 @@
+# Builds the web UI as a demo (engine in WebAssembly) and publishes it to GitHub Pages.
+# In the repo settings, set Pages to deploy from "GitHub Actions".
+name: Deploy demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install and test
+        working-directory: web
+        run: |
+          bun install --frozen-lockfile
+          bun run test
+      - name: Build
+        working-directory: web
+        env:
+          VITE_DEMO: wasm
+          VITE_BASE: /stag-trader/
+        run: bun run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

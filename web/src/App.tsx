@@ -13,7 +13,7 @@ import { REF_PX, type Side } from './feed'
 import { fmtChange, px2 } from './format'
 import { FLAT } from './pnl'
 import { checkTicket, type Ticket as TicketState } from './ticket'
-import { useExchange } from './useExchange'
+import { DEMO, useExchange } from './useExchange'
 
 const LADDER_LEVELS = 11
 const CANDLE_SLOTS = 60
@@ -78,6 +78,7 @@ export default function App() {
           ))}
         </nav>
         <div className="grow" />
+        {DEMO && <span className="demo-tag mono" title="The C++ engine, compiled to WebAssembly, running in this page. The other traders are simulated.">live demo · engine in your browser</span>}
         <div className="instrument mono">
           <span className="sym">STAG</span>
           <span className="px">{px2(last)}</span>

@@ -53,3 +53,12 @@ add_executable(journal_test tests/journal_test.cpp)
 target_include_directories(journal_test PRIVATE tools)
 target_link_libraries(journal_test PRIVATE gateway_lib)
 add_test(NAME journal_test COMMAND journal_test)
+
+# The browser build's C API, compiled natively for testing
+add_library(stag_wasm_api STATIC wasm/stag_wasm.cpp)
+target_include_directories(stag_wasm_api PUBLIC tools)
+target_link_libraries(stag_wasm_api PUBLIC gateway_lib)
+
+add_executable(wasm_api_test tests/wasm_api_test.cpp)
+target_link_libraries(wasm_api_test PRIVATE stag_wasm_api)
+add_test(NAME wasm_api_test COMMAND wasm_api_test)

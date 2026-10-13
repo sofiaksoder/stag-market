@@ -41,7 +41,7 @@ Browser    ──WS───▶ │ gateway: poll loop, decode,  │ ──WS─
 It's all one thread for now. The plan is separate pinned threads joined by lock-free rings (see Progress).
 
 - **Book:** flat array of price levels per side, an intrusive FIFO per level, orders from a preallocated pool, price-time priority. Limit and market orders, cancel, modify.
-- **Gateway:** binary protocol (`NewOrder`, `Cancel`, `Ack`, `Fill`) over TCP and WebSocket. Orders over 50,000 shares are rejected.
+- **Gateway:** binary protocol (`NewOrder`, `Cancel`, `Ack`, `Fill`) over TCP and WebSocket, or in the page through WebAssembly. Orders over 50,000 shares are rejected.
 - **Market data:** every message has a seq that goes up by one. Level deltas carry the new size, trades come with the aggressor side, and a snapshot is sent on connect or on request. A client that sees a gap freezes its book, asks for a snapshot, and replays the deltas it buffered.
 - **Journal:** every order, cancel and disconnect is written with its timestamp. Replaying a journal through a fresh exchange gives identical trades, book and seqs.
 
@@ -49,7 +49,7 @@ It's all one thread for now. The plan is separate pinned threads joined by lock-
 
 ```bash
 cmake -S . -B build -DSTAG_SANITIZE=ON && cmake --build build
-./build/order_book_test && ./build/gateway_test && ./build/ws_test && ./build/journal_test
+./build/order_book_test && ./build/gateway_test && ./build/ws_test && ./build/journal_test && ./build/wasm_api_test
 cd web && bun install && bun run test    # npm works too
 ```
 
@@ -71,6 +71,18 @@ cd web && bun install && bun run dev
 It opens on http://localhost:5173 and connects to `ws://127.0.0.1:9002` (override with `VITE_WS_URL`). Trade has the book, candles, ticket, orders and tape. Portfolio shows average-cost P&L.
 
 Over WebSocket each feed message is one binary message (type byte plus body, no length prefix). A browser gets a snapshot after the handshake and can ask for another by sending the single byte `23`. The same socket is also an order session: send NewOrder (`1`) and Cancel (`2`) the same way and the Ack and Fill replies come back on it. A Fill carries the seq of its trade on the feed, which is how the UI marks your trades on the tape.
+
+### Live demo (WebAssembly)
+
+The same engine and simulator are compiled to WebAssembly (`wasm/stag_wasm.cpp`), so the UI can run with no server: the bots are the seeded simulator and your orders hit the real C++ book. The page talks to it through the same messages as the WebSocket gateway.
+
+```bash
+source ~/emsdk/emsdk_env.sh        # Emscripten, see https://emscripten.org/docs/getting_started/downloads.html
+wasm/build.sh                      # writes web/src/wasm/stag_engine.js
+cd web && VITE_DEMO=wasm bun run dev
+```
+
+The built module is committed, so only changes to the engine need Emscripten. `.github/workflows/pages.yml` builds the demo and publishes it to GitHub Pages on every push to `main`. Set Pages to deploy from "GitHub Actions" in the repo settings. `wasm_api_test` runs the module's C API natively, so the contract is checked without a browser.
 
 ### Journal and replay
 
@@ -100,10 +112,11 @@ It runs the book variants, then starts the gateway itself for the round-trip num
 | `engine/` | order book and id index |
 | `gateway/` | wire protocol, exchange glue, market-data publisher, journal, WebSocket, TCP server |
 | `tools/` | seeded session generator and journal replay |
+| `wasm/` | the engine behind a C API for the browser, and its build script |
 | `bench/` | benchmark and the `std::map` baseline book |
 | `bots/` | Python bot, market-data client, WebSocket probe |
 | `web/` | React + Vite UI |
-| `tests/` | order book, gateway, WebSocket and journal tests |
+| `tests/` | order book, gateway, WebSocket, journal and WebAssembly API tests |
 
 ## Progress
 
@@ -113,8 +126,9 @@ It runs the book variants, then starts the gateway itself for the round-trip num
 - [x] 4. Web UI: trade, portfolio, replay, performance
 - [x] 5. Event journal and replay
 - [x] 6. Benchmark and first optimization passes
-- [ ] 7. Multithreading: pinned threads, SPSC rings, epoll on Linux
-- [ ] 8. Replace the draft logo, add GoogleTest and Google Benchmark, kernel-bypass experiments
+- [x] 7. Browser demo: engine compiled to WebAssembly, deployed to GitHub Pages
+- [ ] 8. Multithreading: a thread per stage with lock-free SPSC rings (macOS can't pin cores, so no pinning)
+- [ ] 9. Replace the draft logo, add GoogleTest and Google Benchmark, kernel-bypass experiments
 
 ## Notes
 
