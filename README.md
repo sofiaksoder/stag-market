@@ -1,3 +1,5 @@
+<img src="docs/stag-logo.svg" alt="Stag Market logo" width="96">
+
 # Stag Market
 
 A stock exchange simulation I wrote primarily in C++20, with Python bots and a minimalist, Scandinavian-inspired web UI. It trades one fictional stock, `STAG`, and the demo runs entirely in your browser via WebAssembly (see Design decisions below).
