@@ -31,7 +31,7 @@ jobs:
         working-directory: web
         env:
           VITE_DEMO: wasm
-          VITE_BASE: /stag-trader/
+          VITE_BASE: /stag-market/
         run: bun run build
       - uses: actions/upload-pages-artifact@v3
         with:
