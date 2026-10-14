@@ -1,5 +1,4 @@
 # Builds the web UI as a demo (engine in WebAssembly) and publishes it to GitHub Pages.
-# In the repo settings, set Pages to deploy from "GitHub Actions".
 name: Deploy demo
 
 on:
