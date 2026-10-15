@@ -35,9 +35,7 @@ This project began as a deep dive into the engineering behind modern financial e
 
 ### WebAssembly
 
-Running the exchange would normally require setting up a local native toolchain, building a gateway, launching a backend daemon, and bridging it to a web UI. Recognising that local environment friction would prevent most visitors from trying the demo, I compiled the core C++ matching engine directly to WebAssembly (Wasm). This shifts the entire application to the client side, allowing the exchange to run with near-native performance entirely within the user's browser—no setup required.
-
-The demo runs in your browser with nothing to install and no server to keep running. Your orders hit the real C++ book, and the bots are the seeded imulator.
+Running the exchange would normally require setting up a local native toolchain, building a gateway, launching a backend daemon, and bridging it to a web UI. Recognising that local environment friction would prevent most visitors from trying the demo, I compiled the core C++ matching engine directly to WebAssembly (Wasm). This shifts the entire application to the client side, allowing the exchange to run with near-native performance entirely within the user's browser, no setup required.
 
 The tradeoff: the browser demo is one user against simulated bots. The TCP and WebSocket gateway is still there for running Python bots against a live engine.
 
