@@ -1,12 +1,12 @@
 # Stag Market
 
-A stock exchange I wrote from scratch in C++20, with Python bots and a minimalist, Scandinavian-inspired web UI. It trades one fictional stock, `STAG`, and the demo runs entirely in your browser via WebAssembly (see Design decisions below).
+A stock exchange simulation I wrote primarily in C++20, with Python bots and a minimalist, Scandinavian-inspired web UI. It trades one fictional stock, `STAG`, and the demo runs entirely in your browser via WebAssembly (see Design decisions below).
 
 **[Live demo](https://sofiaksoder.github.io/stag-market/)**
 
 ![Stag Market demo](docs/demo.gif)
 
-The names **Stag Market** and **STAG stock** were inspired by the term "stag": a short-term trader who applies for new shares in an initial public offering (IPO) and flips them immediately when trading opens to capture a quick profit.
+**Stag Market** and **STAG stock** were inspired by the term "stag": a short-term trader who applies for new shares in an initial public offering (IPO) and flips them immediately when trading opens to capture a quick profit.
 
 ## Function
 
